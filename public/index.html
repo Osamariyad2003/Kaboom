@@ -800,18 +800,19 @@
       }, 1000);
     </script>
     <script>
-      // Load Google Maps key and inject Maps for impact module
+      // Load Google Maps API directly for GitHub Pages
       (function(){
         function loadMaps(){
           if (window.google && window.google.maps) return; // already loaded
-          fetch('/maps-key').then(r=>r.json()).then(({key})=>{
-            const s=document.createElement('script');
-            s.src=`https://maps.googleapis.com/maps/api/js?key=${key}&callback=initMap`;
-            s.async=true; s.defer=true; document.head.appendChild(s);
-          }).catch(()=>{
-            const m=document.getElementById('impact-map');
-            if(m) m.innerHTML='<div style="padding:20px;color:#f97316">Missing MAPS_API_KEY on server.</div>';
-          });
+          
+          // Your Google Maps API key
+          const MAPS_API_KEY = "AIzaSyBHC9Bv2XHiXvWwG2NZznrZX0mRs3s1haw";
+          
+          const s = document.createElement('script');
+          s.src = `https://maps.googleapis.com/maps/api/js?key=${MAPS_API_KEY}&callback=initMap`;
+          s.async = true; 
+          s.defer = true; 
+          document.head.appendChild(s);
         }
         window.addEventListener('DOMContentLoaded', loadMaps);
       })();
