@@ -1,0 +1,831 @@
+<html lang="en">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>KABOOM Website</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+    <!-- Tailwind utilities for Impact section -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- KaTeX (used by impact page text if needed) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" crossorigin="anonymous" defer onload="renderMathInElement(document.body);"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  </head>
+  <body> 
+       <section class="hero">
+      <h1>KABOOM?</h1>
+      <h2>or not Kaboom</h2>
+      <p class="description">
+        Can we predict the asteroid's fate? Explore, simulate, and find out! Explore asteroid impact scenarios, predict consequences, and evaluate mitigation strategies using real NASA and USGS datasets.
+      </p>
+      <div class="question-buttons" style="margin-top: 40px;">
+        <button class="question-btn" onclick="scrollToSection('page-resident')">Start the Experience</button>
+        <button class="question-btn secondary" onclick="scrollToSection('orbital-controls')">Skip to Simulation</button>
+      </div>
+      <p class="hint-text">Tip: scroll down to begin your journey</p>
+    </section>
+
+    <!-- Page 2: Are you a resident on Earth? -->
+    <section id="page-resident" class="question-page">
+      <div>
+        <h2>Are you a resident on Earth?</h2>
+        <p>Just checking — this determines whether we guilt-trip you later.</p>
+        <div class="question-buttons">
+          <button class="question-btn" onclick="answerResident('yes')">Yes.</button>
+          <button class="question-btn secondary" onclick="answerResident('no')">No</button>
+        </div>
+        <p id="resident-response" style="margin-top: 30px; font-size: 1.1em; color: var(--secondary-cyan);"></p>
+      </div>
+    </section>
+
+    <!-- Page 3: Oh great! what a coincidence! -->
+    <section id="page-coincidence" class="question-page" style="display: none;">
+      <div>
+        <h1>Oh great! what a coincidence!</h1>
+        <p style="font-size: 1.3em; max-width: 800px; margin: 0 auto;">
+          Because this <span style="color: var(--primary-gold); font-size: 1.8em;">→</span> is <strong style="color: var(--primary-gold);">Impactor-2025</strong>. 
+          It may, or may not, crush on Earth.<br>Still interested?
+        </p>
+        <div class="question-buttons">
+          <button class="question-btn" onclick="scrollToSection('astrophysics-intro')">Yes, show me.</button>
+          <button class="question-btn secondary" onclick="showGoodLuck()">No, I'm good.</button>
+        </div>
+        <p id="coincidence-response" style="margin-top: 30px; font-size: 1.1em;"></p>
+      </div>
+    </section>
+
+    <!-- New Astrophysics Introduction Page -->
+    <section id="astrophysics-intro" class="question-page" style="display: none;">
+      <div style="max-width: 1000px; margin: 0 auto;">
+        <h1 style="font-family: 'Kalam', cursive; font-size: clamp(2.5em, 6vw, 4.5em); color: var(--secondary-cyan); text-shadow: 0 0 25px rgba(77, 208, 225, 0.9); margin-bottom: 0.5em; font-weight: 700;">
+          First, let's get to know some astrophysics
+        </h1>
+        <p style="font-size: clamp(1.1em, 2.5vw, 1.8em); color: var(--primary-gold); margin-bottom: 2em; font-weight: 600;">
+          🔍 Science is short and useful I promise.
+        </p>
+        <div class="question-buttons">
+          <button class="question-btn" onclick="scrollToSection('orbital-controls')" style="padding: 18px 45px; font-size: 1.3em;">
+            GO
+          </button>
+          <button class="question-btn secondary" onclick="scrollToSection('deflection-tool')" style="padding: 15px 35px; font-size: 1.1em;">
+            Skip to Simulation
+          </button>
+        </div>
+        <p class="hint-text" style="margin-top: 30px; font-size: 1em; color: var(--text-muted);">
+          💡 Tip: Understanding orbital mechanics helps you better use the asteroid deflection simulator
+        </p>
+      </div>
+    </section>
+
+    <!-- Orbital Controls Section -->
+   section id="orbital-controls" class="content" style="padding: 60px 20px;">
+      <h3 class="title-glow" style="text-align: center; margin-bottom: 40px;">Orbital Visualization Controls</h3>
+      
+      <div id="canvasWrapper" style="position: relative; display: inline-block; margin: 0 auto; width: 100%; text-align: center;">
+        <canvas id="orbitCanvas" style="max-width: 90vw; border: 2px solid rgba(255, 193, 7, 0.3); border-radius: 12px; background: radial-gradient(circle at center, #001122 0%, #000011 70%, #000000 100%);"></canvas>
+        
+        <div id="controls" style="
+          position: absolute; 
+          top: 20px; 
+          right: 20px; 
+          background: linear-gradient(135deg, rgba(0, 18, 51, 0.9), rgba(0, 8, 20, 0.95)); 
+          padding: 20px; 
+          border-radius: 12px; 
+          font-family: 'Montserrat', sans-serif;
+          font-size: 14px;
+          color: #fff;
+          min-width: 260px;
+          border: 1px solid rgba(255, 193, 7, 0.2);
+          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+          backdrop-filter: blur(10px);
+        ">
+          <h4 style="color: var(--primary-gold); margin-bottom: 15px; font-size: 16px; text-align: center;">Orbital Parameters</h4>
+          
+          <!-- Eccentricity slider -->
+          <div style="margin-bottom: 20px; position: relative; width: 100%;">
+            <label>
+              <span id="eccLabel" style="cursor:pointer; text-decoration: underline; font-weight: 600; color: var(--secondary-cyan);">
+                Eccentricity
+              </span>: <span id="eccVal" style="color: var(--primary-gold); font-weight: 700;">0.827</span>
+            </label>
+            <input type="range" id="eccSlider" min="0" max="0.99" step="0.001" value="0.827" style="width:100%; margin-top: 8px; height: 8px; border-radius: 5px; cursor: pointer;">
+            
+            <!-- Tick for original value -->
+            <div id="eccTick" style="
+                position: absolute;
+                top: 28px;
+                width: 3px;
+                height: 8px;
+                background: #FFD700;
+                pointer-events: none;
+            "></div>
+            <div id="eccTickLabel" style="
+                position: absolute;
+                top: 8px;
+                right: 0;
+                font-size: 11px;
+                color: #FFD700;
+            ">Original: 0.827</div>
+          </div>
+
+          <!-- Semi-major axis slider -->
+          <div style="margin-bottom: 20px; position: relative; width: 100%;">
+            <label>
+              <span id="aLabel" style="cursor:pointer; text-decoration: underline; font-weight: 600; color: var(--secondary-cyan);">
+                Semi-major axis (AU)
+              </span>: <span id="aVal" style="color: var(--primary-gold); font-weight: 700;">1.078</span>
+            </label>
+            <input type="range" id="aSlider" min="0.1" max="3" step="0.001" value="1.078" style="width:100%; margin-top: 8px; height: 8px; border-radius: 5px; cursor: pointer;">
+
+            <!-- Tick for original value -->
+            <div id="aTick" style="
+                position: absolute;
+                top: 28px;
+                width: 3px;
+                height: 8px;
+                background: #FFD700;
+                pointer-events: none;
+            "></div>
+            <div id="aTickLabel" style="
+                position: absolute;
+                top: 8px;
+                right: 0;
+                font-size: 11px;
+                color: #FFD700;
+            ">Original: 1.078</div>
+          </div>
+
+          <!-- Inclination slider -->
+          <div style="margin-bottom: 20px; position: relative; width: 100%;">
+            <label>
+              <span id="incLabel" style="cursor:pointer; text-decoration: underline; font-weight: 600; color: var(--secondary-cyan);">
+                Inclination (°)
+              </span>: <span id="incVal" style="color: var(--primary-gold); font-weight: 700;">30</span>
+            </label>
+            <input type="range" id="incSlider" min="0" max="180" step="0.1" value="30" style="width:100%; margin-top:8px; height:8px; border-radius:5px; cursor: pointer;">
+          </div>
+
+          <!-- Argument of periapsis slider -->
+          <div style="margin-bottom: 20px; position: relative; width: 100%;">
+            <label>
+              <span id="omegaLabel" style="cursor:pointer; text-decoration: underline; font-weight: 600; color: var(--secondary-cyan);">
+                Argument of Periapsis (°)
+              </span>: <span id="omegaVal" style="color: var(--primary-gold); font-weight: 700;">45</span>
+            </label>
+            <input type="range" id="omegaSlider" min="0" max="360" step="1" value="45" style="width:100%; margin-top:8px; height:8px; border-radius:5px; cursor: pointer;">
+          </div>
+
+          <!-- Longitude of ascending node slider -->
+          <div style="margin-bottom: 20px; position: relative; width: 100%;">
+            <label>
+              <span id="OmegaLabel" style="cursor:pointer; text-decoration: underline; font-weight: 600; color: var(--secondary-cyan);">
+                Longitude of Ascending Node (°)
+              </span>: <span id="OmegaVal" style="color: var(--primary-gold); font-weight: 700;">60</span>
+            </label>
+            <input type="range" id="OmegaSlider" min="0" max="360" step="1" value="60" style="width:100%; margin-top:8px; height:8px; border-radius:5px; cursor: pointer;">
+          </div>
+
+          <!-- Control buttons -->
+          <hr style="margin: 20px 0; border: 0; border-top: 1px solid rgba(255, 193, 7, 0.2);" />
+          
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button id="resetView" class="btn" style="flex: 1; padding: 8px 12px; font-size: 12px;">Reset View</button>
+            <button id="toggleEarth" class="btn btn--ghost" style="flex: 1; padding: 8px 12px; font-size: 12px;">Hide Earth</button>
+            <button id="screenshot" class="btn btn--ghost" style="flex: 1; padding: 8px 12px; font-size: 12px;">Screenshot</button>
+          </div>
+
+          <div id="infoBox" style="display:none; margin-top: 12px; background: rgba(0,0,0,0.85); padding: 10px; border-radius: 8px; font-size: 12px; border: 1px solid rgba(77, 208, 225, 0.3);"></div>
+        </div>
+      </div>
+
+      <!-- Navigation to Impact Calculator -->
+      <div class="text-center mt-12">
+        <button class="question-btn" onclick="scrollToSection('impact-calculator')" style="padding: 18px 45px; font-size: 1.3em;">
+          Continue to Impact Calculator →
+        </button>
+      </div>
+    </section>
+
+    <!-- Impact Energy Calculator Page -->
+    <section id="impact-calculator" class="content" style="background:#000;color:#e5e7eb;padding-top:24px;">
+      <div id="impact-app" class="max-w-6xl mx-auto">
+        <section id="inputs" class="dark-card p-6 rounded-2xl mb-8">
+          <h2 class="text-lg font-bold text-orange-400 mb-4">ASTEROID PARAMETERS</h2>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="holo-bubble p-4">
+              <label class="text-xs text-gray-300 block mb-2">Mass (kg)</label>
+              <input id="mass-input" type="number" value="1000000" min="0" step="1000" oninput="calculateEnergy()" class="bubble-select font-mono-space text-2xl bg-transparent" />
+              <p class="text-xs text-gray-400 mt-2">Example: 1,000,000 kg</p>
+            </div>
+            <div class="holo-bubble p-4">
+              <label class="text-xs text-gray-300 block mb-2">Velocity (km/s)</label>
+              <input id="velocity-input" type="number" value="20" min="0" step="0.1" oninput="calculateEnergy()" class="bubble-select font-mono-space text-2xl bg-transparent" />
+              <p class="text-xs text-gray-400 mt-2">Typical range: 11–72 km/s</p>
+            </div>
+            <div id="data-bubbles" class="holo-bubble p-4 text-center">
+              <p class="text-sm text-red-400 font-semibold mb-2">TNT Equivalent (MT)</p>
+              <div class="text-3xl font-extrabold text-amber-300 font-mono-space" id="tnt-output">0 MT</div>
+              <div id="ke-output" class="text-xs text-gray-400 mt-1 font-mono-space"></div>
+            </div>
+          </div>
+        </section>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <aside id="severity-panel" class="dark-card p-6 rounded-xl">
+            <h3 class="text-xl font-extrabold text-red-400 mb-4">PLANETARY HAZARD SCALE (PHS)</h3>
+            <div id="severity-description-container" class="text-center mb-6">
+              <div id="severity-title" class="text-lg font-bold text-green-400">LOADING DATA...</div>
+              <div id="severity-subtext" class="text-xs text-gray-400 mt-1">Estimating impact consequences.</div>
+            </div>
+            <div class="mb-6 relative">
+              <div id="severity-bar" class="rounded-full" style="height:40px;background:linear-gradient(90deg,#10b981,#f59e0b,#f97316,#ef4444)"></div>
+              <div id="severity-indicator" style="left:0%;position:absolute;top:-8px;transform:translateX(-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:12px solid #fef3c7;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4))"></div>
+              <div class="absolute w-full flex justify-between" style="top: 3.5rem;">
+                <span class="text-xs text-gray-400 font-mono-space">0.1 MT</span>
+                <span class="text-xs text-gray-400 font-mono-space">10 MT</span>
+                <span class="text-xs text-gray-400 font-mono-space">100 MT</span>
+                <span class="text-xs text-gray-400 font-mono-space">1,000 MT</span>
+                <span class="text-xs text-gray-400 font-mono-space">10k+ MT</span>
+              </div>
+            </div>
+            <h4 class="text-lg font-bold text-amber-300 mb-3">CONSEQUENCE REPORT</h4>
+            <ul class="space-y-3">
+              <li class="p-3 bg-gray-900/30 rounded-lg flex justify-between items-center"><span class="text-red-400 font-semibold">Fireball Radius:</span><span id="fireball-radius" class="font-mono-space">0.0 km</span></li>
+              <li class="p-3 bg-gray-900/30 rounded-lg flex justify-between items-center"><span class="text-orange-400 font-semibold">Severe Damage Radius (5 psi):</span><span id="severe-damage-radius" class="font-mono-space">0.0 km</span></li>
+              <li class="p-3 bg-gray-900/30 rounded-lg flex justify-between items-center"><span class="text-yellow-400 font-semibold">Thermal Burn Radius (3rd degree):</span><span id="thermal-radius" class="font-mono-space">0.0 km</span></li>
+              <li class="p-3 bg-gray-900/30 rounded-lg flex justify-between items-center"><span class="text-blue-400 font-semibold">Tsunami Potential:</span><span id="tsunami-risk" class="font-mono-space text-green-300">NONE</span></li>
+            </ul>
+          </aside>
+
+          <section id="historical-comparison" class="dark-card p-6 rounded-xl">
+            <h3 class="text-xl font-bold text-amber-400 mb-4">COMPARATIVE ENERGY MATRIX</h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-sm">
+                <thead>
+                  <tr class="text-gray-400 border-b border-gray-700">
+                    <th class="p-2 font-semibold">Event</th>
+                    <th class="p-2 font-semibold text-right">Yield (MT)</th>
+                    <th class="p-2 font-semibold text-center">Relative Power</th>
+                  </tr>
+                </thead>
+                <tbody id="comparison-body" class="font-mono-space"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        <!-- Navigation to Deflection Tool -->
+        <div class="text-center mt-12">
+          <button class="question-btn" onclick="scrollToSection('deflection-tool')" style="padding: 18px 45px; font-size: 1.3em;">
+            Continue to Deflection Simulator →
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Asteroid Deflection: Kinetic Impactor Tool -->
+    <section id="deflection-tool" class="content" style="background:#000;color:#e5e7eb;padding: 60px 20px;">
+      <div class="max-w-7xl mx-auto">
+        <!-- Main container for the entire tool -->
+        <div id="visualization-tool" style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: start;">
+            <!-- Section for the canvas (visualization) -->
+            <div id="canvas-container" class="dark-card p-6 rounded-xl">
+                <h1 class="text-3xl font-extrabold title-glow mb-4 text-center">Asteroid Deflection: Kinetic Impactor</h1>
+                <canvas id="impactCanvas" width="600" height="400" style="width: 100%; max-width: 600px; height: 400px; border-radius: 8px; background: #000080; border: 2px solid rgba(255, 193, 7, 0.2); display: block;"></canvas>
+                <div id="labels" style="margin-top: 20px; text-align: center; font-size: 0.95em;">
+                    <p><span style="color: yellow;">●</span> - Sun ($M_\text{cen}$)</p>
+                    <p><span style="color: #6A0505;">●</span> - Asteroid ($M_a$)</p>
+                    <p><span style="color: cyan;">●</span> - Impactor ($m_i$)</p>
+                    <p><span style="color: lime;">$\hat{t}$</span> - Tangent Vector</p>
+                    <p><span style="color: yellow;">$\hat{n}$</span> - Normal Vector</p>
+                    <p><span style="color: cyan;">$\hat{s}$</span> - Impactor Direction</p>
+                    <p><span style="color: orange;">$\hat{e}$</span> - Ejecta Direction</p>
+                </div>
+                <div id="controls-bottom" style="margin-top: 25px; text-align: center;">
+                    <button id="playButton" class="btn" style="font-weight: bold; padding: 15px 40px; font-size: 1.1em; margin-bottom: 15px;">RUN IMPACT SIMULATION</button>
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-top: 10px;">
+                        <label for="speedSlider" style="color: var(--secondary-cyan); font-weight: 600;">Animation Speed:</label>
+                        <input type="range" id="speedSlider" min="1" max="10" value="5" style="flex: 1; max-width: 250px;">
+                        <span id="speedValue" style="color: var(--primary-gold); font-weight: 700; min-width: 70px;">Normal</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section for the controls (sliders) -->
+            <div id="controls-panel" class="dark-card p-6 rounded-xl">
+                <h2 class="text-2xl font-bold title-glow mb-6" style="color: var(--primary-gold);">Impactor Parameters</h2>
+                
+                <div class="control-group" style="margin-bottom: 25px;">
+                    <label for="aSlider" style="display: block; margin-bottom: 8px; color: var(--secondary-cyan); font-weight: 600;">Orbit Radius ($a$):</label>
+                    <input type="range" id="aSlider" min="150" max="300" value="250" step="1" style="width: 100%;">
+                    <span id="aValue" style="color: var(--primary-gold); font-weight: 700; font-family: ui-monospace, monospace;">1.500e+0 AU</span>
+                    <p class="calc-output" style="margin-top: 8px; font-size: 0.9em; color: var(--text-muted);">Asteroid Velocity ($v$): <span id="vValue" style="color: var(--secondary-cyan);">0.00</span> km/s</p>
+                </div>
+                
+                <div class="control-group" style="margin-bottom: 25px;">
+                    <label for="massSlider" style="display: block; margin-bottom: 8px; color: var(--secondary-cyan); font-weight: 600;">Impactor Mass ($m_i$):</label>
+                    <input type="range" id="massSlider" min="100" max="1000" value="500" step="10" style="width: 100%;">
+                    <span id="massValue" style="color: var(--primary-gold); font-weight: 700; font-family: ui-monospace, monospace;">500 kg</span>
+                </div>
+                
+                <div class="control-group" style="margin-bottom: 25px;">
+                    <label for="velocitySlider" style="display: block; margin-bottom: 8px; color: var(--secondary-cyan); font-weight: 600;">Impactor Speed ($u$):</label>
+                    <input type="range" id="velocitySlider" min="1000" max="10000" value="6100" step="100" style="width: 100%;">
+                    <span id="velocityValue" style="color: var(--primary-gold); font-weight: 700; font-family: ui-monospace, monospace;">6100 m/s</span>
+                </div>
+                
+                <div class="control-group" style="margin-bottom: 25px;">
+                    <label for="phiSlider" style="display: block; margin-bottom: 8px; color: var(--secondary-cyan); font-weight: 600;">Impact Angle ($\phi$):</label>
+                    <input type="range" id="phiSlider" min="-90" max="90" value="0" step="1" style="width: 100%;">
+                    <span id="phiValue" style="color: var(--primary-gold); font-weight: 700; font-family: ui-monospace, monospace;">0° (Head-on)</span>
+                </div>
+                
+                <div class="control-group" style="margin-bottom: 25px;">
+                    <label for="betaSlider" style="display: block; margin-bottom: 8px; color: var(--secondary-cyan); font-weight: 600;">Ejecta Factor ($\beta$):</label>
+                    <input type="range" id="betaSlider" min="1" max="4" value="3" step="1" style="width: 100%;">
+                    <span id="betaValue" style="color: var(--primary-gold); font-weight: 700; font-family: ui-monospace, monospace;">3 (High Ejecta)</span>
+                </div>
+
+                <div id="results" style="margin-top: 30px; padding: 20px; background: rgba(255, 193, 7, 0.05); border-radius: 10px; border: 1px solid rgba(255, 193, 7, 0.3);">
+                    <h3 class="text-lg font-bold mb-3" style="color: var(--primary-gold);">Calculated Deflection:</h3>
+                    <p style="margin-bottom: 8px; color: var(--text-light);">Tangent $\Delta v$: <span id="deltaVt" style="color: var(--secondary-cyan); font-weight: 700; font-family: ui-monospace, monospace;">0.000</span> m/s</p>
+                    <p style="margin-bottom: 8px; color: var(--text-light);">Relative $\frac{\Delta a}{a}$: <span id="deltaA_A" style="color: var(--secondary-cyan); font-weight: 700; font-family: ui-monospace, monospace;">0.000</span>%</p>
+                    <p style="font-size: 0.8em; color: #cc6600; margin-top: 10px;">*Orbit change is visually scaled ($\times 10^8$).</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="flex justify-between mt-12" style="gap: 20px;">
+          <button class="question-btn secondary" onclick="scrollToSection('impact-calculator')" style="padding: 15px 35px;">
+            ← Back to Calculator
+          </button>
+          <button class="question-btn" onclick="scrollToSection('impact-map-page')" style="padding: 15px 35px;">
+            Continue to Global Map →
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Global Impact Map Page (Separate Section) -->
+    <section id="impact-map-page" class="content" style="background:#000;color:#e5e7eb;padding-top:24px;min-height:100vh;">
+      <div class="max-w-7xl mx-auto">
+        <header class="text-center mb-8">
+          <h1 class="text-4xl sm:text-5xl font-extrabold title-glow mb-2">GLOBAL IMPACT VISUALIZER</h1>
+          <p class="text-sm text-gray-400">Select a location on the map to visualize impact zones and consequence probabilities.</p>
+        </header>
+
+        <section id="map-section" class="dark-card p-6 rounded-xl">
+          <div class="flex items-center justify-between mb-4">
+            <div class="text-sm text-gray-400">Click map to set location</div>
+          </div>
+          <div class="text-xs text-gray-400 mb-3">Impact Lat/Lng: <span id="lat-lng-display" class="font-mono-space text-yellow-400">40.7128, -74.0060</span></div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <div class="holo-bubble select-wrap">
+              <label class="text-xs text-gray-300 mb-1 block">Select Country</label>
+              <select id="country-select" class="bubble-select" onchange="onCountryChange(this.value)">
+                <option value="">Choose country or click map</option>
+                <option value="US">United States</option>
+                <option value="JP">Japan</option>
+                <option value="CN">China</option>
+                <option value="IN">India</option>
+                <option value="BR">Brazil</option>
+                <option value="RU">Russia</option>
+                <option value="AU">Australia</option>
+                <option value="ZA">South Africa</option>
+                <option value="GB">United Kingdom</option>
+                <option value="FR">France</option>
+                <option value="DE">Germany</option>
+                <option value="CA">Canada</option>
+                <option value="MX">Mexico</option>
+              </select>
+            </div>
+            <div class="holo-bubble select-wrap">
+              <label class="text-xs text-gray-300 mb-1 block">Major City</label>
+              <select id="city-select" class="bubble-select" onchange="onCityChange(this.value)">
+                <option value="">Choose city</option>
+              </select>
+            </div>
+          </div>
+          <div id="impact-map" class="mb-4" style="height:520px;border-radius:12px;overflow:hidden;background:linear-gradient(180deg, rgba(17,24,39,0.85), rgba(10,10,20,0.85))"></div>
+          <div id="probability-chart" class="mt-4">
+            <h4 class="text-lg font-bold text-amber-400 mb-3">IMPACT CONSEQUENCE PROBABILITY (by city/country)</h4>
+            <div id="probability-bars" class="space-y-3"></div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <!-- Load scripts in proper order -->
+    <script src="/app.js"></script>
+    <script src="/orbital.js"></script>
+    <script src="/deflection.js"></script>
+
+    <script src="/impact.js"></script>
+    <script>
+      // Debug script loading
+      console.log('All scripts loaded, initializing tools...');
+      
+      // Force initialization after a delay to ensure DOM is ready
+      setTimeout(() => {
+        console.log('🚀 Forcing orbital visualization initialization...');
+        const orbitCanvas = document.getElementById('orbitCanvas');
+        const impactCanvas = document.getElementById('impactCanvas');
+        
+        console.log('Orbit canvas:', orbitCanvas);
+        console.log('Impact canvas:', impactCanvas);
+        
+        // FORCE 2D orbital visualization regardless of THREE.js
+        if (orbitCanvas) {
+          console.log('🎨 Starting enhanced 2D orbital animation...');
+          
+          const ctx = orbitCanvas.getContext('2d');
+          let manualAnimationId;
+          
+          // Orbital parameters
+          const params = {
+            eccentricity: 0.827,
+            semiMajorAxis: 1.078,
+            inclination: 30,
+            argumentOfPeriapsis: 45,
+            longitudeOfAscendingNode: 60
+          };
+          
+          function manualDraw() {
+            // Clear canvas with space background
+            const gradient = ctx.createRadialGradient(
+              orbitCanvas.width/2, orbitCanvas.height/2, 0,
+              orbitCanvas.width/2, orbitCanvas.height/2, orbitCanvas.width/2
+            );
+            gradient.addColorStop(0, '#001122');
+            gradient.addColorStop(0.7, '#000818');
+            gradient.addColorStop(1, '#000000');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, orbitCanvas.width, orbitCanvas.height);
+            
+            // Draw bright stars
+            for (let i = 0; i < 150; i++) {
+              const x = (i * 137.5) % orbitCanvas.width;
+              const y = (i * 73.2) % orbitCanvas.height;
+              const brightness = Math.sin(Date.now() * 0.001 + i) * 0.5 + 0.5;
+              
+              ctx.fillStyle = `rgba(255, 255, 255, ${brightness})`;
+              ctx.beginPath();
+              ctx.arc(x, y, Math.random() * 2 + 0.5, 0, 2 * Math.PI);
+              ctx.fill();
+            }
+            
+            const centerX = orbitCanvas.width / 2;
+            const centerY = orbitCanvas.height / 2;
+            
+            // === DRAW ORBITAL PATHS FIRST (BEFORE OBJECTS) ===
+            
+            // 1. Earth orbit (BRIGHT CIRCULAR PATH)
+            if (earthVisible) {
+              ctx.beginPath();
+              ctx.arc(centerX, centerY, 180, 0, 2 * Math.PI);
+              ctx.strokeStyle = '#4DD0E1';
+              ctx.lineWidth = 6;
+              ctx.shadowColor = '#4DD0E1';
+              ctx.shadowBlur = 15;
+              ctx.setLineDash([]);
+              ctx.stroke();
+              ctx.shadowBlur = 0;
+              
+              // Add inner glow to Earth orbit
+              ctx.beginPath();
+              ctx.arc(centerX, centerY, 180, 0, 2 * Math.PI);
+              ctx.strokeStyle = 'rgba(77, 208, 225, 0.3)';
+              ctx.lineWidth = 15;
+              ctx.stroke();
+            }
+            
+            // 2. Asteroid orbit (BRIGHT ELLIPTICAL PATH)
+            const a = params.semiMajorAxis * 140; // Semi-major axis
+            const e = params.eccentricity;
+            const b = a * Math.sqrt(1 - e * e); // Semi-minor axis
+            
+            // Draw multiple layers for bright elliptical orbit
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate(params.longitudeOfAscendingNode * Math.PI / 180);
+            
+            // Outer glow
+            ctx.beginPath();
+            ctx.ellipse(0, 0, a, b, 0, 0, 2 * Math.PI);
+            ctx.strokeStyle = 'rgba(255, 193, 7, 0.2)';
+            ctx.lineWidth = 20;
+            ctx.stroke();
+            
+            // Main orbit line
+            ctx.beginPath();
+            ctx.ellipse(0, 0, a, b, 0, 0, 2 * Math.PI);
+            ctx.strokeStyle = '#FFC107';
+            ctx.lineWidth = 8;
+            ctx.shadowColor = '#FFC107';
+            ctx.shadowBlur = 20;
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+            
+            // Inner bright line
+            ctx.beginPath();
+            ctx.ellipse(0, 0, a, b, 0, 0, 2 * Math.PI);
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            ctx.restore();
+            
+            // === NOW DRAW CELESTIAL OBJECTS ===
+            
+            // Draw HUGE Sun with multiple layers
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 45, 0, 2 * Math.PI);
+            ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 35, 0, 2 * Math.PI);
+            ctx.fillStyle = '#FFD700';
+            ctx.shadowColor = '#FFD700';
+            ctx.shadowBlur = 25;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 25, 0, 2 * Math.PI);
+            ctx.fillStyle = '#FFA500';
+            ctx.fill();
+            
+            // Sun core
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 15, 0, 2 * Math.PI);
+            ctx.fillStyle = '#FFFF99';
+            ctx.fill();
+            
+            // Sun highlight
+            ctx.beginPath();
+            ctx.arc(centerX - 8, centerY - 8, 8, 0, 2 * Math.PI);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fill();
+            
+            // Draw HUGE animated Earth (only if visible)
+            if (earthVisible) {
+              const earthAngle = Date.now() * 0.003;
+              const earthX = centerX + 180 * Math.cos(earthAngle);
+              const earthY = centerY + 180 * Math.sin(earthAngle);
+              
+              // Earth outer glow
+              ctx.beginPath();
+              ctx.arc(earthX, earthY, 30, 0, 2 * Math.PI);
+              ctx.fillStyle = 'rgba(107, 147, 214, 0.4)';
+              ctx.fill();
+              
+              // Earth main body
+              ctx.beginPath();
+              ctx.arc(earthX, earthY, 22, 0, 2 * Math.PI);
+              ctx.fillStyle = '#6B93D6';
+              ctx.shadowColor = '#6B93D6';
+              ctx.shadowBlur = 15;
+              ctx.fill();
+              ctx.shadowBlur = 0;
+              
+              // Earth continents
+              ctx.beginPath();
+              ctx.arc(earthX - 6, earthY - 6, 8, 0, 2 * Math.PI);
+              ctx.fillStyle = '#90EE90';
+              ctx.fill();
+              
+              // Earth atmosphere
+              ctx.beginPath();
+              ctx.arc(earthX, earthY, 25, 0, 2 * Math.PI);
+              ctx.strokeStyle = 'rgba(135, 206, 235, 0.6)';
+              ctx.lineWidth = 2;
+              ctx.stroke();
+            }
+            
+            // Draw HUGE animated asteroid
+            const time = Date.now() * 0.002;
+            const asteroidAngle = time + (params.argumentOfPeriapsis * Math.PI / 180);
+            
+            // Calculate elliptical position
+            const asteroidRadius = a * (1 - e * e) / (1 + e * Math.cos(asteroidAngle));
+            const asteroidX = centerX + asteroidRadius * Math.cos(asteroidAngle);
+            const asteroidY = centerY + asteroidRadius * Math.sin(asteroidAngle);
+            
+            // Asteroid outer glow
+            ctx.beginPath();
+            ctx.arc(asteroidX, asteroidY, 25, 0, 2 * Math.PI);
+            ctx.fillStyle = 'rgba(255, 193, 7, 0.5)';
+            ctx.fill();
+            
+            // Asteroid main body
+            ctx.beginPath();
+            ctx.arc(asteroidX, asteroidY, 18, 0, 2 * Math.PI);
+            ctx.fillStyle = '#8B4513';
+            ctx.shadowColor = '#8B4513';
+            ctx.shadowBlur = 12;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            
+            // Asteroid surface details
+            ctx.beginPath();
+            ctx.arc(asteroidX - 4, asteroidY - 4, 6, 0, 2 * Math.PI);
+            ctx.fillStyle = '#CD853F';
+            ctx.fill();
+            
+            // Asteroid crater
+            ctx.beginPath();
+            ctx.arc(asteroidX + 3, asteroidY + 3, 3, 0, 2 * Math.PI);
+            ctx.fillStyle = '#654321';
+            ctx.fill();
+            
+            // === DRAW ENHANCED LABELS ===
+            ctx.fillStyle = '#FFC107';
+            ctx.font = 'bold 22px Montserrat';
+            ctx.textAlign = 'left';
+            ctx.shadowColor = '#000000';
+            ctx.shadowBlur = 4;
+            ctx.fillText('☉ Sun', 30, 45);
+            if (earthVisible) {
+              ctx.fillText('🌍 Earth', 30, 75);
+            }
+            ctx.fillText('🌑 Asteroid', 30, earthVisible ? 105 : 75);
+            ctx.shadowBlur = 0;
+            
+            // Show current orbital positions
+            ctx.fillStyle = '#4DD0E1';
+            ctx.font = 'bold 16px Montserrat';
+            if (earthVisible) {
+              const earthAngle = Date.now() * 0.003;
+              ctx.fillText(`Earth Position: ${Math.floor((earthAngle * 180 / Math.PI) % 360)}°`, 30, orbitCanvas.height - 140);
+            }
+            ctx.fillText(`Asteroid Position: ${Math.floor((asteroidAngle * 180 / Math.PI) % 360)}°`, 30, orbitCanvas.height - 120);
+            
+            // Show orbital parameters with enhanced styling
+            ctx.fillStyle = '#FFD700';
+            ctx.font = 'bold 18px Montserrat';
+            ctx.fillText(`Eccentricity: ${params.eccentricity.toFixed(3)}`, 30, orbitCanvas.height - 90);
+            ctx.fillText(`Semi-major axis: ${params.semiMajorAxis.toFixed(3)} AU`, 30, orbitCanvas.height - 70);
+            ctx.fillText(`Inclination: ${params.inclination.toFixed(1)}°`, 30, orbitCanvas.height - 50);
+            ctx.fillText(`Arg. of Periapsis: ${params.argumentOfPeriapsis.toFixed(1)}°`, 30, orbitCanvas.height - 30);
+            
+            manualAnimationId = requestAnimationFrame(manualDraw);
+          }
+          
+          // Start the enhanced animation
+          manualDraw();
+          console.log('✅ Enhanced 2D orbital animation with bright paths started!');
+          
+          // Setup slider controls for manual version
+          const sliders = ['eccSlider', 'aSlider', 'incSlider', 'omegaSlider', 'OmegaSlider'];
+          sliders.forEach(sliderId => {
+            const slider = document.getElementById(sliderId);
+            if (slider) {
+              slider.addEventListener('input', (e) => {
+                const value = parseFloat(e.target.value);
+                if (sliderId === 'eccSlider') {
+                  params.eccentricity = value;
+                  document.getElementById('eccVal').textContent = value.toFixed(3);
+                } else if (sliderId === 'aSlider') {
+                  params.semiMajorAxis = value;
+                  document.getElementById('aVal').textContent = value.toFixed(3);
+                } else if (sliderId === 'incSlider') {
+                  params.inclination = value;
+                  document.getElementById('incVal').textContent = value.toFixed(1);
+                } else if (sliderId === 'omegaSlider') {
+                  params.argumentOfPeriapsis = value;
+                  document.getElementById('omegaVal').textContent = value.toFixed(1);
+                } else if (sliderId === 'OmegaSlider') {
+                  params.longitudeOfAscendingNode = value;
+                  document.getElementById('OmegaVal').textContent = value.toFixed(1);
+                }
+                console.log(`Updated ${sliderId}:`, value);
+              });
+            }
+          });
+          
+          // Setup control buttons functionality
+          const resetBtn = document.getElementById('resetView');
+          const toggleEarthBtn = document.getElementById('toggleEarth');
+          const screenshotBtn = document.getElementById('screenshot');
+          
+          let earthVisible = true;
+          
+          if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
+              console.log('🔄 Reset View clicked');
+              // Reset all orbital parameters to original values
+              params.eccentricity = 0.827;
+              params.semiMajorAxis = 1.078;
+              params.inclination = 30;
+              params.argumentOfPeriapsis = 45;
+              params.longitudeOfAscendingNode = 60;
+              
+              // Update slider values
+              document.getElementById('eccSlider').value = 0.827;
+              document.getElementById('eccVal').textContent = '0.827';
+              document.getElementById('aSlider').value = 1.078;
+              document.getElementById('aVal').textContent = '1.078';
+              document.getElementById('incSlider').value = 30;
+              document.getElementById('incVal').textContent = '30';
+              document.getElementById('omegaSlider').value = 45;
+              document.getElementById('omegaVal').textContent = '45';
+              document.getElementById('OmegaSlider').value = 60;
+              document.getElementById('OmegaVal').textContent = '60';
+              
+              earthVisible = true;
+              toggleEarthBtn.textContent = 'Hide Earth';
+              
+              console.log('✅ View reset to original parameters');
+            });
+          }
+          
+          if (toggleEarthBtn) {
+            toggleEarthBtn.addEventListener('click', () => {
+              earthVisible = !earthVisible;
+              toggleEarthBtn.textContent = earthVisible ? 'Hide Earth' : 'Show Earth';
+              console.log(`🌍 Earth ${earthVisible ? 'shown' : 'hidden'}`);
+            });
+          }
+          
+          if (screenshotBtn) {
+            screenshotBtn.addEventListener('click', () => {
+              console.log('📸 Screenshot button clicked');
+              
+              // Create a temporary canvas for screenshot
+              const tempCanvas = document.createElement('canvas');
+              const tempCtx = tempCanvas.getContext('2d');
+              tempCanvas.width = orbitCanvas.width;
+              tempCanvas.height = orbitCanvas.height;
+              
+              // Fill with space background
+              tempCtx.fillStyle = '#000814';
+              tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+              
+              // Draw the current orbital visualization
+              tempCtx.drawImage(orbitCanvas, 0, 0);
+              
+              // Add timestamp and title
+              tempCtx.fillStyle = '#FFC107';
+              tempCtx.font = 'bold 18px Montserrat';
+              tempCtx.textAlign = 'center';
+              tempCtx.fillText('KABOOM - Orbital Visualization', tempCanvas.width / 2, 30);
+              
+              tempCtx.textAlign = 'right';
+              tempCtx.font = 'bold 14px Montserrat';
+              const timestamp = new Date().toLocaleString();
+              tempCtx.fillText(timestamp, tempCanvas.width - 20, tempCanvas.height - 20);
+              
+              // Download the screenshot
+              const link = document.createElement('a');
+              link.download = `kaboom-orbital-${Date.now()}.png`;
+              link.href = tempCanvas.toDataURL();
+              link.click();
+              
+              console.log('✅ Screenshot saved!');
+            });
+          }
+        }
+        
+        // Initialize deflection canvas
+        if (impactCanvas && typeof initDeflectionCanvas === 'function') {
+          console.log('Initializing deflection canvas...');
+          initDeflectionCanvas();
+        }
+      }, 1000);
+    </script>
+    <script>
+      // Load Google Maps key and inject Maps for impact module
+      (function(){
+        function loadMaps(){
+          if (window.google && window.google.maps) return; // already loaded
+          fetch('/maps-key').then(r=>r.json()).then(({key})=>{
+            const s=document.createElement('script');
+            s.src=`https://maps.googleapis.com/maps/api/js?key=${key}&callback=initMap`;
+            s.async=true; s.defer=true; document.head.appendChild(s);
+          }).catch(()=>{
+            const m=document.getElementById('impact-map');
+            if(m) m.innerHTML='<div style="padding:20px;color:#f97316">Missing MAPS_API_KEY on server.</div>';
+          });
+        }
+        window.addEventListener('DOMContentLoaded', loadMaps);
+      })();
+
+      // Initialize question pages on load
+      window.addEventListener('DOMContentLoaded', () => {
+        // Hide question pages initially
+        const coincidencePage = document.getElementById('page-coincidence');
+        if (coincidencePage) {
+          coincidencePage.style.display = 'none';
+        }
+      });
+    </script>
+  </body>
+</html>
+
+
