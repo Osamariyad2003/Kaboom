@@ -806,7 +806,7 @@
           if (window.google && window.google.maps) return; // already loaded
           
           // Your Google Maps API key
-          const MAPS_API_KEY = "AIzaSyBHC9Bv2XHiXvWwG2NZznrZX0mRs3s1haw";
+          const MAPS_API_KEY = "REPLACE_WITH_ENV_API_KEY";  // CodeBuster: redacted hardcoded secret — set API_KEY in env
           
           const s = document.createElement('script');
           s.src = `https://maps.googleapis.com/maps/api/js?key=${MAPS_API_KEY}&callback=initMap`;
