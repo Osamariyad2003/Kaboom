@@ -19,13 +19,6 @@ app.get('/config', (_req, res) => {
   res.json({ mapsApiKey: process.env.MAPS_API_KEY ? 'present' : null });
 });
 
-// Return Google Maps API key (client needs this to load Maps JS)
-app.get('/maps-key', (_req, res) => {
-  const key = process.env.MAPS_API_KEY || '';
-  if (!key) return res.status(404).json({ error: 'Missing MAPS_API_KEY' });
-  res.json({ key });
-});
-
 // Proxy to Gemini API (Generative Language REST) using fetch
 app.post('/api/gemini', async (req, res) => {
   try {
@@ -77,5 +70,3 @@ app.post('/api/gemini', async (req, res) => {
 app.listen(port, () => {
   console.log(`Kaboom server running on http://localhost:${port}`);
 });
-
-
